@@ -6,7 +6,7 @@ const dishes = require(path.resolve("src/data/dishes-data"));
 // Use this function to assign ID's when necessary
 const nextId = require("../utils/nextId");
 
-// Validation functions
+// Validation Middleware
 function requestDataHasProperty(propertyName) {
   return function (req, res, next) {
     // Get the body data from the request
@@ -28,4 +28,11 @@ function requestDataHasProperty(propertyName) {
   };
 }
 
-// TODO: Implement the /dishes handlers needed to make the tests pass
+// Route Middleware
+function list(req, res) {
+  res.json({ data: dishes });
+}
+
+module.exports = {
+  list,
+};
