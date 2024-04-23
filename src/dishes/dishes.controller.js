@@ -83,6 +83,22 @@ function dishExists(req, res, next) {
 };
 
 // Verify that the dish id in the request body matches the dishId in the request parameter
+function verifyDishIdDataMatchesRoute(req, res, next) {
+  // Get dishId from res.locals because it previously matched dishId from the route
+  const dishId = res.locals.dish.id;
+  // Get the 'id' property from the request body
+  const { data: { id } } = req.body;
+  if (!id || id === dishId) { // IDs match, or an ID was not in the request body
+    // Go to the next function in the chain
+    return next();
+  }
+
+  // Mismatching IDs, return an error
+  next({
+    status: 404,
+    message: `Dish id does not match route id. Dish: ${id}, Route: ${dishId}`,
+  });
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Route Middleware
@@ -118,6 +134,23 @@ function read(req, res, next) {
   res.json({ data: res.locals.dish });
 };
 
+// Request: PUT /dishes/:dishId
+function update(req, res, next) {
+  // Get the matching dish from res.locals
+  const foundDish = res.locals.dish;
+  // Get the new data from the request body
+  const { data: { name, description, price, image_url } = {} } = req.body;
+
+  // Update the dish
+  foundDish.name = name;
+  foundDish.description = description;
+  foundDish.price = price;
+  foundDish.image_url = image_url;
+
+  // Respond with the updated dish
+  res.json({ data: foundDish });
+}
+
 // Export route middleware for the router to call
 module.exports = {
   list,
@@ -131,4 +164,15 @@ module.exports = {
     create
   ], // Run validation checks before calling create
   read: [dishExists, read],
+  update: [
+    dishExists,
+    requestDataHasProperty("name"),
+    requestDataHasProperty("description"),
+    requestDataHasProperty("price"),
+    requestDataHasProperty("image_url"),
+    priceDataIsValid,
+    imageUrlDataIsValid,
+    verifyDishIdDataMatchesRoute,
+    update
+  ], // Run validation checks before calling update
 };
