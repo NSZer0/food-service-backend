@@ -42,6 +42,26 @@ function priceDataIsValid(req, res, next) {
   next();
 }
 
+// Validate that the image_url property is valid
+function imageUrlDataIsValid(req, res, next) {
+  const { data: { image_url }  = {} } = req.body;
+  // Test property 'image_url' is a valid url
+  try {
+    // Thorws an error on malformed url
+    let url = new URL(image_url);
+  }
+  catch (error) {
+    return next({
+      status: 400,
+      message: "Url is not valid"
+    });
+  }
+  finally {
+    // Url is valid, go to the next function
+    next();
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Route Middleware
 ////////////////////////////////////////////////////////////////////////
@@ -79,6 +99,7 @@ module.exports = {
     requestDataHasProperty("price"),
     requestDataHasProperty("image_url"),
     priceDataIsValid,
+    imageUrlDataIsValid,
     create
   ], // Run validation checks before calling create
 };
