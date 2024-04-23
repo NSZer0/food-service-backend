@@ -53,7 +53,7 @@ function imageUrlDataIsValid(req, res, next) {
   catch (error) {
     return next({
       status: 400,
-      message: "Url is not valid"
+      message: "Malformed URL in property 'image_url'."
     });
   }
   finally {
@@ -61,6 +61,28 @@ function imageUrlDataIsValid(req, res, next) {
     next();
   }
 }
+
+// Verify that a dish in the dishes array has an id that matches the dishId in the request parameter
+function dishExists(req, res, next) {
+  // Get the dishId from request parameters
+  const { dishId } = req.params;
+  // Use find to set the dish from dishes array matching dishId
+  const foundDish = dishes.find(dish => dish.id === dishId);
+  if (foundDish) { // Matching dish found
+    // Store the matchin dish object in res.locals to use in later functions in the route chain
+    res.locals.dish = foundDish;
+    // Go to the next function in the chain
+    return next();
+  }
+
+  // No matching dish was found, return an error
+  next({
+    status: 404,
+    message: `Dish does not exist: ${dishId}.`,
+  });
+};
+
+// Verify that the dish id in the request body matches the dishId in the request parameter
 
 ////////////////////////////////////////////////////////////////////////
 // Route Middleware
@@ -90,6 +112,12 @@ function create(req, res) {
   res.status(201).json({ data: newDish });
 }
 
+// Request: GET /dishes/:dishId
+function read(req, res, next) {
+  // Respond with the dish object stored in res.locals
+  res.json({ data: res.locals.dish });
+};
+
 // Export route middleware for the router to call
 module.exports = {
   list,
@@ -102,4 +130,5 @@ module.exports = {
     imageUrlDataIsValid,
     create
   ], // Run validation checks before calling create
+  read: [dishExists, read],
 };
