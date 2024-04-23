@@ -6,4 +6,23 @@ const orders = require(path.resolve("src/data/orders-data"));
 // Use this function to assigh ID's when necessary
 const nextId = require("../utils/nextId");
 
-// TODO: Implement the /orders handlers needed to make the tests pass
+////////////////////////////////////////////////////////////////////////
+// Validation Middleware
+////////////////////////////////////////////////////////////////////////
+
+
+
+////////////////////////////////////////////////////////////////////////
+// Route Middleware
+////////////////////////////////////////////////////////////////////////
+
+// Request: GET /orders
+function list(req, res) {
+  // Respond with the entire orders array
+  res.json({ data: orders });
+}
+
+// Export route middleware for the router to call
+module.exports = {
+  list,
+};
