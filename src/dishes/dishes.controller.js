@@ -66,10 +66,10 @@ function imageUrlDataIsValid(req, res, next) {
 function dishExists(req, res, next) {
   // Get the dishId from request parameters
   const { dishId } = req.params;
-  // Use find to set the dish from dishes array matching dishId
+  // Use find to set the dish from the dishes array matching the dishId
   const foundDish = dishes.find(dish => dish.id === dishId);
   if (foundDish) { // Matching dish found
-    // Store the matchin dish object in res.locals to use in later functions in the route chain
+    // Store the matching dish object in res.locals to use in later functions in the route chain
     res.locals.dish = foundDish;
     // Go to the next function in the chain
     return next();

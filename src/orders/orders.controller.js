@@ -70,6 +70,26 @@ function validateDishesQuantity(req, res, next) {
   next();
 }
 
+// Verify that an order in the orders array has an id that matches the orderId in the request parameter
+function orderExists(req, res, next) {
+  // Get the orderId from request parameters
+  const { orderId } = req.params;
+  // Use find to set the order from the orders array matching the orderId
+  const foundOrder = orders.find(order => order.id === orderId);
+  if (foundOrder) { // Matching order found
+    // Store the matching order object in res.locals to use in later functions in the route chain
+    res.locals.order = foundOrder;
+    // Go to the next function in the chain
+    return next();
+  }
+
+  // No matching dish was found, return an error
+  next({
+    status: 404,
+    message: `Order does not exist: ${orderId}.`,
+  });
+};
+
 ////////////////////////////////////////////////////////////////////////
 // Route Middleware
 ////////////////////////////////////////////////////////////////////////
@@ -97,6 +117,12 @@ function create(req, res) {
   res.status(201).json({ data: newOrder });
 }
 
+// Request: GET /orders/:orderId
+function read(req, res, next) {
+  // Respond with the order object stored in res.locals
+  res.json({ data: res.locals.order });
+};
+
 // Export route middleware for the router to call
 module.exports = {
   list,
@@ -108,4 +134,5 @@ module.exports = {
     validateDishesQuantity,
     create
   ],
+  read: [orderExists, read],
 };
