@@ -95,7 +95,7 @@ function verifyDishIdDataMatchesRoute(req, res, next) {
 
   // Mismatching IDs, return an error
   next({
-    status: 404,
+    status: 400,
     message: `Dish id does not match route id. Dish: ${id}, Route: ${dishId}`,
   });
 }

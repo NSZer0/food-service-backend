@@ -24,7 +24,7 @@ function requestDataHasProperty(propertyName) {
     if (propertyName === "dishes")
       responseMessage = "Order must include a dish";
     else if (propertyName === "status")
-      responseMessage = "Order must have a status of pending, preparing, out-for-delivery, delivered";
+      responseMessage = "Order must have a status of pending, preparing, out-for-delivery, or delivered";
 
     // Return an error
     next({
@@ -38,16 +38,25 @@ function requestDataHasProperty(propertyName) {
 function validateStatusForExistingOrder(req, res, next) {
   // Get the body data from the request
   const { data: { status } } = req.body;
-  // Make sure the status property is 'delivered'
-  if (status === "delivered") {
+  // Make sure the status property is a valid option
+  if (status === "pending" ||
+    status === "preparing" ||
+    status === "out-for-delivery")
+  {
     // Data is valid, go to the next function
     return next();
+  }
+  else if (status === "delivered") { // Valid option, but cannot change a delivered order
+    return next({
+      status: 400,
+      message: "A delivered order cannot be changed"
+    });
   }
 
   // Invalid data, return an error
   next({
     status: 400,
-    message: "A delivered order cannot be changed"
+    message: "Order must have a status of pending, preparing, out-for-delivery, or delivered"
   });
 }
 
@@ -126,7 +135,7 @@ function verifyOrderIdDataMatchesRoute(req, res, next) {
 
   // Mismatching IDs, return an error
   next({
-    status: 404,
+    status: 400,
     message: `Order id does not match route id. Order: ${id}, Route: ${orderId}.`,
   });
 }
@@ -143,7 +152,7 @@ function verifyOrderIsPending(req, res, next) {
 
   // Status is not pending, so we can't delete the order
   next({
-    status: 404,
+    status: 400,
     message: "An order cannot be deleted unless it is pending",
   });
 }
