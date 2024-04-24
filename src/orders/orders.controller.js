@@ -19,13 +19,36 @@ function requestDataHasProperty(propertyName) {
     if (data[propertyName])    
       return next(); // Data is valid, go to the next function
 
-    // Invalid data, return an error
-    const missingProperty = propertyName === "dishes" ? "dish" : propertyName;
+    // Invalid data, format the response message based on propertyName
+    let responseMessage = `Order must include a ${propertyName}`;
+    if (propertyName === "dishes")
+      responseMessage = "Order must include a dish";
+    else if (propertyName === "status")
+      responseMessage = "Order must have a status of pending, preparing, out-for-delivery, delivered";
+
+    // Return an error
     next({
       status: 400,
-      message: `Order must include a ${missingProperty}`
+      message: responseMessage
     });
   };
+}
+
+// Validate the status property
+function validateStatusForExistingOrder(req, res, next) {
+  // Get the body data from the request
+  const { data: { status } } = req.body;
+  // Make sure the status property is 'delivered'
+  if (status === "delivered") {
+    // Data is valid, go to the next function
+    return next();
+  }
+
+  // Invalid data, return an error
+  next({
+    status: 400,
+    message: "A delivered order cannot be changed"
+  });
 }
 
 // Validate the dishes property
@@ -88,7 +111,25 @@ function orderExists(req, res, next) {
     status: 404,
     message: `Order does not exist: ${orderId}.`,
   });
-};
+}
+
+// Verify that the order id in the request body matches the orderId in the request parameter
+function verifyOrderIdDataMatchesRoute(req, res, next) {
+  // Get orderId from res.locals because it previously matched orderId from the route
+  const orderId = res.locals.order.id;
+  // Get the 'id' property from the request body
+  const { data: { id } } = req.body;
+  if (!id || id === orderId) { // IDs match, or an ID was not in the request body
+    // Go to the next function in the chain
+    return next();
+  }
+
+  // Mismatching IDs, return an error
+  next({
+    status: 404,
+    message: `Order id does not match route id. Order: ${id}, Route: ${orderId}.`,
+  });
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Route Middleware
@@ -123,6 +164,23 @@ function read(req, res, next) {
   res.json({ data: res.locals.order });
 };
 
+// Request: PUT /orders/:orderId
+function update(req, res, next) {
+  // Get the matching order from res.locals
+  const foundOrder = res.locals.order;
+  // Get the new data from the request body
+  const { data: { deliverTo, mobileNumber, status, dishes } = {} } = req.body;
+
+  // Update the order
+  foundOrder.deliverTo = deliverTo;
+  foundOrder.mobileNumber = mobileNumber;
+  foundOrder.status = status;
+  foundOrder.dishes = dishes;
+
+  // Respond with the updated dish
+  res.json({ data: foundOrder });
+}
+
 // Export route middleware for the router to call
 module.exports = {
   list,
@@ -133,6 +191,18 @@ module.exports = {
     validateDishes,
     validateDishesQuantity,
     create
-  ],
-  read: [orderExists, read],
+  ], // Run validation checks before calling update
+  read: [orderExists, read], // Run validation checks before calling update
+  update: [
+    orderExists,
+    requestDataHasProperty("deliverTo"),
+    requestDataHasProperty("mobileNumber"),
+    requestDataHasProperty("status"),
+    validateStatusForExistingOrder,
+    requestDataHasProperty("dishes"),
+    validateDishes,
+    validateDishesQuantity,
+    verifyOrderIdDataMatchesRoute,
+    update
+  ], // Run validation checks before calling update
 };
