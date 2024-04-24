@@ -131,6 +131,23 @@ function verifyOrderIdDataMatchesRoute(req, res, next) {
   });
 }
 
+// Verify that the order status is 'pending' before deleting
+function verifyOrderIsPending(req, res, next) {
+  // Get order from res.locals
+  const foundOrder = res.locals.order;
+  // Check that status is pending
+  if (foundOrder.status === "pending") {
+    // Go to the next function in the chain
+    return next();
+  }
+
+  // Status is not pending, so we can't delete the order
+  next({
+    status: 404,
+    message: "An order cannot be deleted unless it is pending",
+  });
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Route Middleware
 ////////////////////////////////////////////////////////////////////////
@@ -181,6 +198,18 @@ function update(req, res, next) {
   res.json({ data: foundOrder });
 }
 
+// Request: DELETE /orders/:orderId
+function destroy(req, res) {
+  // Get the order id from res.locals
+  const orderId = res.locals.order.id;
+  // Find the index of the matching order in the array of orders
+  const index = orders.findIndex((order) => order.id === orderId);
+  // Remove the matching index from the array of orders
+  const deletedOrder = orders.splice(index, 1);
+  // send a response with no message
+  res.sendStatus(204);
+}
+
 // Export route middleware for the router to call
 module.exports = {
   list,
@@ -205,4 +234,5 @@ module.exports = {
     verifyOrderIdDataMatchesRoute,
     update
   ], // Run validation checks before calling update
+  delete: [orderExists, verifyOrderIsPending, destroy],
 };
