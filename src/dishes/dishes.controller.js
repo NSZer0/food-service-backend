@@ -160,7 +160,6 @@ module.exports = {
     requestDataHasProperty("price"),
     requestDataHasProperty("image_url"),
     priceDataIsValid,
-    imageUrlDataIsValid,
     create
   ], // Run validation checks before calling create
   read: [dishExists, read],
@@ -171,7 +170,6 @@ module.exports = {
     requestDataHasProperty("price"),
     requestDataHasProperty("image_url"),
     priceDataIsValid,
-    imageUrlDataIsValid,
     verifyDishIdDataMatchesRoute,
     update
   ], // Run validation checks before calling update
